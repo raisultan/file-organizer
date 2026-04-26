@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -105,6 +106,40 @@ func (fo *FileOrganizer) moveFile(sourcePath, targetDir string) error {
 
 	fo.logSuccess(fmt.Sprintf("перемещён %s -> %s", sourcePath, targetPath))
 	return nil
+}
+
+func (fo *FileOrganizer) Organize() error {
+	if err := fo.initLog(); err != nil {
+		return fmt.Errorf("не удалось инициализировать лог: %w", err)
+	}
+
+	return filepath.WalkDir(fo.sourceDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			fo.logError(fmt.Sprintf("ошибка обхода %s: %v", path, err))
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		if filepath.Dir(path) != fo.sourceDir {
+			return nil
+		}
+
+		ext := strings.ToLower(filepath.Ext(path))
+		targetDir, ok := fo.rulesMap[ext]
+		if !ok {
+			return nil
+		}
+
+		if err := fo.moveFile(path, targetDir); err != nil {
+			return nil
+		}
+
+		fo.processedFiles++
+		return nil
+	})
 }
 
 func main() {
