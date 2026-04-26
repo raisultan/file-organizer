@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/fs"
 	"log"
@@ -179,7 +180,39 @@ func (fo *FileOrganizer) generateReport() string {
 }
 
 func main() {
-	for ext, category := range DefaultRules {
-		fmt.Printf("%s -> %s\n", ext, category)
+	fmt.Println("=== Файловый органайзер ===")
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Введите путь к директории для организации (Enter для текущей директории): ")
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("Ошибка чтения ввода: %v\n", err)
+		os.Exit(1)
 	}
+
+	sourcePath := strings.TrimSpace(input)
+	if sourcePath == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("Не удалось определить текущую директорию: %v\n", err)
+			os.Exit(1)
+		}
+		sourcePath = cwd
+	}
+
+	organizer, err := NewFileOrganizer(sourcePath)
+	if err != nil {
+		fmt.Printf("Ошибка: %v\n", err)
+		os.Exit(1)
+	}
+	defer organizer.Close()
+
+	if err := organizer.Organize(); err != nil {
+		fmt.Printf("Ошибка при организации файлов: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println()
+	fmt.Print(organizer.generateReport())
+	fmt.Println("Лог операций: organizer.log")
 }
