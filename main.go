@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 var DefaultRules = map[string]string{
@@ -74,6 +77,33 @@ func (fo *FileOrganizer) Close() error {
 	if fo.logFile != nil {
 		return fo.logFile.Close()
 	}
+	return nil
+}
+
+func (fo *FileOrganizer) moveFile(sourcePath, targetDir string) error {
+	fullTargetDir := filepath.Join(fo.sourceDir, targetDir)
+	if err := os.MkdirAll(fullTargetDir, 0755); err != nil {
+		fo.logError(fmt.Sprintf("не удалось создать директорию %s: %v", fullTargetDir, err))
+		return fmt.Errorf("не удалось создать директорию %s: %w", fullTargetDir, err)
+	}
+
+	fileName := filepath.Base(sourcePath)
+	targetPath := filepath.Join(fullTargetDir, fileName)
+
+	if _, err := os.Stat(targetPath); err == nil {
+		ext := filepath.Ext(fileName)
+		name := strings.TrimSuffix(fileName, ext)
+		timestamp := time.Now().Format("_2006-01-02_15-04-05")
+		fileName = name + timestamp + ext
+		targetPath = filepath.Join(fullTargetDir, fileName)
+	}
+
+	if err := os.Rename(sourcePath, targetPath); err != nil {
+		fo.logError(fmt.Sprintf("не удалось переместить файл %s в %s: %v", sourcePath, targetPath, err))
+		return fmt.Errorf("не удалось переместить файл %s в %s: %w", sourcePath, targetPath, err)
+	}
+
+	fo.logSuccess(fmt.Sprintf("перемещён %s -> %s", sourcePath, targetPath))
 	return nil
 }
 
