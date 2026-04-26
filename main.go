@@ -28,29 +28,27 @@ type FileOrganizer struct {
 	logFile        *os.File
 }
 
-// NewFileOrganizer создаёт новый FileOrganizer.
-// Сигнатура: func NewFileOrganizer(sourceDir string) (*FileOrganizer, error)
-func NewFileOrganizer(sourceDir string) (*FileOrganizer, error) {
+func NewFileOrganizer(sourceDir string) *FileOrganizer {
 	if sourceDir == "" {
-		return nil, fmt.Errorf("путь к директории не может быть пустым")
+		panic("путь к директории не может быть пустым")
 	}
 
 	info, err := os.Stat(sourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("директория не существует: %s", sourceDir)
+			panic(fmt.Sprintf("директория не существует: %s", sourceDir))
 		}
-		return nil, fmt.Errorf("не удалось получить информацию о директории %s: %w", sourceDir, err)
+		panic(fmt.Sprintf("не удалось получить информацию о директории %s: %v", sourceDir, err))
 	}
 
 	if !info.IsDir() {
-		return nil, fmt.Errorf("указанный путь не является директорией: %s", sourceDir)
+		panic(fmt.Sprintf("указанный путь не является директорией: %s", sourceDir))
 	}
 
 	return &FileOrganizer{
 		sourceDir: sourceDir,
 		rulesMap:  DefaultRules,
-	}, nil
+	}
 }
 
 func main() {
