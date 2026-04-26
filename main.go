@@ -28,6 +28,8 @@ type FileOrganizer struct {
 	logFile        *os.File
 }
 
+// NewFileOrganizer создаёт новый FileOrganizer.
+// Сигнатура: func NewFileOrganizer(sourceDir string) (*FileOrganizer, error)
 func NewFileOrganizer(sourceDir string) (*FileOrganizer, error) {
 	if sourceDir == "" {
 		return nil, fmt.Errorf("путь к директории не может быть пустым")
